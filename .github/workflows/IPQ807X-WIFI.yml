@@ -100,6 +100,34 @@ jobs:
       run: |
         [ -e files ] && mv files $OPENWRT_PATH/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE $OPENWRT_PATH/.config
+        
+    # 1. 配置缓存
+    - name: Cache OpenWrt build
+      uses: actions/cache@v4  # 推荐用 v4
+      with:
+        # 需要缓存的文件夹 (注意路径前要有 openwrt/)
+        path: |
+          openwrt/.ccache
+          openwrt/staging_dir/host*
+          openwrt/staging_dir/toolchain*
+          openwrt/build_dir/host*
+          openwrt/build_dir/toolchain*
+        # 缓存键：基于 OS 和 .config 的哈希
+        key: ${{ runner.os }}-openwrt-cache-${{ hashFiles('openwrt/.config') }}
+        # 如果完全匹配不到，尝试恢复旧的缓存
+        restore-keys: |
+          ${{ runner.os }}-openwrt-cache-
+
+    # 2. 开启 Ccache 选项
+    - name: Enable Ccache
+      run: |
+        cd openwrt
+        # 这一步至关重要，必须在 .config 里开启 ccache 才能利用上面的缓存
+        # 安装 ccache 工具 (如果环境里没有)
+        sudo apt-get install -y ccache
+        # 修改配置
+        echo "CONFIG_CCACHE=y" >> .config
+        # 也可以指定 cache 目录（可选，OpenWrt 默认就在 .ccache）
 
     - name: Download DL Package(下载DL软件包)
       run: |
