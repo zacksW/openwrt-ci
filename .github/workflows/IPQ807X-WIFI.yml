@@ -136,7 +136,10 @@ jobs:
         cd $OPENWRT_PATH/bin/targets/*/*
         cat sha256sums
         cp $OPENWRT_PATH/.config build.config
-        mv -f $OPENWRT_PATH/bin/packages/*/*/*.ipk packages
+        # 使用 find 命令查找，容错率更高
+        # mkdir -p 确保目录存在
+        mkdir -p upload
+        find openwrt/bin/packages -name "*.ipk" -exec mv {} upload/ \; || true
         tar -zcf Packages.tar.gz packages
         rm -rf packages feeds.buildinfo version.buildinfo
         echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
